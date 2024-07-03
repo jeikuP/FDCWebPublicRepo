@@ -30,6 +30,66 @@ App::uses('Controller', 'Controller');
  * @package		app.Controller
  * @link		https://book.cakephp.org/2.0/en/controllers.html#the-app-controller
  */
-class AppController extends Controller {
-    
+class AppController extends Controller
+{
+
+    public $components = array(
+        'DebugKit.Toolbar',
+        'Session',
+        'Flash',
+        'Auth' => array(
+            'loginAction' => array(
+                'controller' => 'users',
+                'action' => 'login',
+                'plugin' => false,
+                'admin' => false
+            ),
+            'loginRedirect' => array(
+                'controller' => 'conversations', // Controller to redirect to after login
+                'action' => 'home' // Action to redirect to after login
+            ),
+            'logoutRedirect' => array(
+                'controller' => 'users', // Controller for logout redirect
+                'action' => 'login' // Action for logout redirect
+            ),
+            'authenticate' => array(
+                'Form' => array(
+                    'fields' => array('username' => 'email') // Adjust according to your User model
+                )
+            ),
+            'authError' => 'Please login to access this page'
+        )
+    );
+
+    public function beforeFilter()
+    {
+        $this->Auth->allow('login', 'register', 'thank_you'); // Allow public access to these actions
+        parent::beforeFilter();
+
+        // Checks if user is logged in
+        if ($this->Auth->user() && in_array($this->request->params['action'], array('login', 'register'))) {
+            $this->redirect($this->Auth->redirectUrl());
+        }
+    }
+
+    public function isAuthorized($user)
+    {
+        return false;
+    }
+
+    // Check for session
+    public function beforeRender()
+    {
+        parent::beforeRender();
+        $this->response->header(
+            array(
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0'
+            )
+        );
+    }
+
 }
+
+
