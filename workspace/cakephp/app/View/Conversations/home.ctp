@@ -1,5 +1,4 @@
 <!-- app/View/Conversations/index.ctp -->
-
 <!DOCTYPE html>
 <html>
 
@@ -14,72 +13,31 @@
 <body>
     <div class="container mt-5 mb-5">
         <div class="d-flex justify-content-between align-items-center">
-            <h2>Message List</h2>
+            <!-- Page Title and Compose Message Button -->
             <div class="d-flex">
-                <!-- New Message Button -->
+                <h2 class="mb-0">Message List</h2>
                 <?php echo $this->Html->link('New Message', array('controller' => 'messages', 'action' => 'compose'), array('class' => 'btn btn-primary ml-3')); ?>
+            </div>
+            <!-- Main Navigation -->
+            <div class="d-flex">
+                <?php echo $this->element('user_info'); ?>
                 <?php echo $this->element('dropdown_menu'); ?>
             </div>
-        </div>
-        <!-- Display Count of Conversations -->
-        <div class="mt-3 ml-1">
-            <strong>Total Conversations:</strong> <?php echo count($conversations); ?>
         </div>
 
         <!-- Search Conversations/Messages -->
         <div class="input-group mt-3">
             <input type="text" class="form-control" id="searchInput" placeholder="Search Conversations...">
-            <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button" id="searchButton">Search</button>
-            </div>
         </div>
 
         <!-- List of Conversations -->
-        <ul class="list-group mt-3" id="conversationList">
-            <?php foreach ($conversations as $conversation): ?>
-                <li class="list-group-item d-flex align-items-center">
-                    <!-- Profile Picture Placeholder or Icon -->
-                    <div class="mr-3">
-                        <?php if (empty($conversation['User2']['profile_picture'])): ?>
-                            <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center"
-                                style="width: 50px; height: 50px;">
-                                <span class="oi oi-person" style="font-size: 20px;"></span>
-                            </div>
-                        <?php else: ?>
-                            <img src="<?php echo h($conversation['User2']['profile_picture']); ?>" class="rounded-circle"
-                                width="50" height="50"
-                                alt="<?php echo h($conversation['User2']['recipient_name']); ?>'s Profile Picture">
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Conversation Details -->
-                    <div>
-                        <a
-                            href="<?php echo $this->Html->url(array('controller' => 'messages', 'action' => 'view', $conversation['Conversation']['id'])); ?>">
-                            <strong>
-                                <?php
-                                if ($conversation['User2']['recipient'] == $userId) {
-                                    echo 'You';
-                                } else {
-                                    echo isset($conversation['User2']['recipient']) ? h($conversation['User2']['recipient']) : 'User2';
-                                }
-                                ?>
-                            </strong>
-                            <div class="text-muted">
-                                <?php
-                                $maxLen = 135; // Maximum number of characters to display
-                                $trimmedText = mb_strimwidth($conversation['LatestMessage']['latest_message'], 0, $maxLen, "...");
-                                echo $trimmedText;
-                                ?>
-                            </div>
-                            <small class="text-muted">
-                                <?php echo date('M j, Y, H:i', strtotime($conversation['LatestMessage']['latest_message_time'])); ?>
-                            </small>
-                        </a>
-                    </div>
-                </li>
-            <?php endforeach; ?>
-        </ul>
+        <?php if (count($conversations) > 0): ?>
+            <?php echo $this->element('conversation_list'); ?>
+        <?php else: ?>
+            <div class="alert alert-info mt-3" role="alert">
+                No conversations found.
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Include jQuery -->
@@ -89,13 +47,53 @@
 
     <script>
         $(document).ready(function () {
-            // Handle search button click
-            $('#searchButton').click(function () {
-                var searchTerm = $('#searchInput').val();
-                // Implement your search logic here (AJAX or form submission)
-                // Example: Redirect to search results page with the search term
-                window.location.href = '<?php echo $this->Html->url(array('controller' => 'conversations', 'action' => 'search')); ?>?term=' + searchTerm;
+            $('#searchInput').on('keyup', function () {
+                var searchTerm = $(this).val();
+                $.ajax({
+                    url: '<?php echo $this->Html->url(array('controller' => 'conversations', 'action' => 'search')); ?>',
+                    method: 'GET',
+                    data: { term: searchTerm },
+                    success: function (response) {
+                        $('#conversationList').html(response);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error:', error);
+                    }
+                });
             });
+        });
+
+        // JavaScript in your view file
+        $(document).on('click', '.delete-conversation', function (e) {
+            e.preventDefault();
+            var conversationId = $(this).data('conversation-id');
+            var deleteUrl = "<?php echo $this->Html->url(array('controller' => 'conversations', 'action' => 'delete')); ?>/" + conversationId;
+
+            // Confirm deletion with a modal or other confirmation method if necessary
+            if (confirm("Are you sure you want to delete this conversation?")) {
+                $.ajax({
+                    url: deleteUrl,
+                    method: 'POST',
+                    success: function (response) {
+                        // Handle success response
+                        console.log(response);
+
+                        // Optionally remove the conversation from the UI
+                        $(`.delete-conversation[data-conversation-id="${conversationId}"]`).closest('li').fadeOut('normal', function () {
+                            $(this).remove(); // Ensure complete removal after fadeOut
+                        });
+
+                        // Update total conversations count
+                        var totalConversations = $('#conversationList > li').length;
+                        $('.total-conversations').text(totalConversations);
+
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle error
+                        console.error(xhr.responseText);
+                    }
+                });
+            }
         });
 
     </script>

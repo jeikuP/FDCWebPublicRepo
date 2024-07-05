@@ -22,7 +22,7 @@
     <div class="card">
         <div class="card-body">
             <h2>Thank You for Registering!</h2>
-            <p>Your registration was successful.</p>
+            <p>Your registration was successful. Please login to complete your profile.</p>
             <?php echo $this->Html->link('Back to Homepage', ['controller' => 'users', 'action' => 'complete_profile'], ['class' => 'btn btn-primary']); ?>
         </div>
     </div>

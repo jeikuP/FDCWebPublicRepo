@@ -23,7 +23,10 @@
                 <a href="javascript:history.back()" class="btn btn-secondary mr-3"><i class="bi bi-arrow-left"></i></a>
                 <h2 class="mb-0">Compose New Message</h2>
             </div>
-            <?php echo $this->element('dropdown_menu'); ?>
+            <div class="d-flex">
+                <?php echo $this->element('user_info'); ?>
+                <?php echo $this->element('dropdown_menu'); ?>
+            </div>
         </div>
 
         <!-- Form to compose a new message -->
@@ -36,6 +39,9 @@
         <div class="form-group">
             <label for="message">Message:</label>
             <?php echo $this->Form->textarea('message', array('class' => 'form-control', 'rows' => '5', 'id' => 'message')); ?>
+            <div class="invalid-feedback">
+                Please enter a message.
+            </div>
         </div>
 
         <div class="form-group">
@@ -67,6 +73,24 @@
                         };
                     },
                     cache: true
+                }
+            });
+
+            // Client-side form validation
+            $('#message').on('input', function () {
+                var message = $(this).val().trim();
+                if (message.length > 0) {
+                    $(this).removeClass('is-invalid');
+                } else {
+                    $(this).addClass('is-invalid');
+                }
+            });
+
+            $('form').on('submit', function (event) {
+                var message = $('#message').val().trim();
+                if (message.length === 0) {
+                    $('#message').addClass('is-invalid');
+                    event.preventDefault();
                 }
             });
         });
